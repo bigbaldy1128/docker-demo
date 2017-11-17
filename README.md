@@ -99,7 +99,7 @@ docker-compose -f docker-demo.yml up
 ```
 # Kubernetes安装使用
 ## minikube
-* [官网](https://kubernetes.io/docs/tasks/tools/install-minikube/)
+* [官网](https://kubernetes.io/docs/tasks/tools/install-minikube/README.md)
 ### 1. 安装virtualbox
 * [下载virtualbox](https://www.virtualbox.org/wiki/Linux_Downloads)
 * yum install SDL
@@ -115,7 +115,7 @@ docker-compose -f docker-demo.yml up
 * 下载，修改版本号即可下载相应版本，例如：https://storage.googleapis.com/kubernetes-release/release/v1.8.3/bin/linux/amd64/kubectl
 * chmod +x ./kubectl
 * mv ./kubectl /usr/local/bin/kubectl
-* [官网](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* [官网](https://kubernetes.io/docs/tasks/tools/install-kubectl/README.md)
 ### 3. 安装minikube
 * [下载](https://github.com/kubernetes/minikube/releases)
 ### 4. 启动minikube
