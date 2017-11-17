@@ -120,3 +120,19 @@ docker-compose -f docker-demo.yml up
 * [下载](https://github.com/kubernetes/minikube/releases)
 ### 4. 启动minikube
 * minikube start //注意启动过程中会下载localkube，需要翻墙(export http_proxy=http://10.16.13.18:8080)
+### 5. 运行container
+```sh
+kubectl run docker-demo --image=127.0.0.1:5555/bigbaldy/docker-demo --port=8888
+```
+查看pod:
+```sh
+kubectl get pods
+```
+会一直卡在creating，没有成功
+### 5. Web UI (Dashboard)
+* [官网](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
+* 部署Dashboard UI
+```sh
+kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+```
+* 访问Dashboard UI （未实现，远程机器权限问题还在研究）
