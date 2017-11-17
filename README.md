@@ -97,6 +97,8 @@ services:
 ```sh
 docker-compose -f docker-demo.yml up
 ```
+## Maven插件构建Docker镜像
+http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种错误！！文章后面有各种解决方式，可以尝试，个人倾向于手动写Dockerfile，然后通过jenkins调用docker命令进行镜像push
 # Kubernetes安装使用
 ## minikube
 * [官网](https://kubernetes.io/docs/tasks/tools/install-minikube/README.md)
