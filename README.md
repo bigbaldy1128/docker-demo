@@ -1,9 +1,9 @@
 # Docker安装使用
-* 安装docker（或者安装docker-ce）
+## 安装docker（或者安装docker-ce）
 ```sh
 yum install -y docker
 ```
-* 安装docker-ce（上面的安装方式有可能版本不是最新的，导致无法使用docker-compose）
+## 安装docker-ce（上面的安装方式有可能版本不是最新的，导致无法使用docker-compose）
 ```sh
 yum install -y yum-utils \
     device-mapper-persistent-data \
@@ -13,11 +13,11 @@ yum-config-manager \
     https://download.docker.com/linux/centos/docker-ce.repo
 yum install docker-ce
 ```
-* 启动
+## 启动
 ```sh
 systemctl start docker
 ```
-* 编写Dockerfile
+## 编写Dockerfile
 ```docker
 # 基于哪个镜像
 FROM java:8 
@@ -31,24 +31,63 @@ EXPOSE 8888
 # 配置容器启动后的命令
 ENTRYPOINT ["java","-jar","/app.jar"]
 ```
-* 使用docker build命令构建镜像，注意后面的"."别丢了
+## 使用docker build命令构建镜像，注意后面的"."别丢了
 ```sh
 docker build -t bigbaldy/docker-demo .
 ```
-* 启动镜像
+## 启动镜像
 ```sh
 docker run -d -p 8888:8888 bigbaldy/docker-demo
 ```
-* 访问http://127.0.0.1:8888/hello 返回hello kubernetes
-* 推送镜像
+## 访问http://127.0.0.1:8888/hello 返回hello kubernetes
+## 推送镜像
 ```sh
 docker push bigbaldy/docker-demo //需要输入你在DockerHub上注册的用户密码
 ```
-* 推送镜像到私有库
+## 推送镜像到私有库(127.0.0.1)
     - docker run -d -p 5000:5000 registry:2 //使用docker registry2.0搭建私有仓库
     - docker tag bigbaldy/docker-demo 127.0.0.1:5000/docker-demo //修改镜像标签，否则会提示找不到镜像的
     - docker push 127.0.0.1:5000/docker-demo
-* 获取私有仓库镜像列表
+## 创建私有库(真实IP)
+* 生成证书
+```sh
+mkdir -p ~/certs
+cd ~/certs
+openssl genrsa -out reg.codesafe.com.key 2048
+```
+* ⽣成密钥⽂件，会有⼀些信息需要填写，注意“Common Name”要填写“reg.codesafe.com”
+```sh
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout reg.codesafe.com.key -x509 -days 365 -out reg.codesafe.com.crt
+```
+* 将生成的证书拷贝到根证书路径
+```sh
+mkdir -p /etc/docker/certs.d/reg.codesafe.com
+cp ~/certs/reg.itmuch.com.crt /etc/docker/certs.d/reg.codesafe.com
+```
+* 重启docker
+```sh
+systemctl restart docker
+* 启动私有库，注意要在~目录下执行
+```sh
+docker run -d -p 443:5000 \
+    --restart=always \
+    --name registry \
+    -v `pwd`/certs:/certs \
+    -v /opt/docker-image:/opt/docker-image \
+    -e STORAGE_PATH=/opt/docker-image \
+    -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/reg.codesafe.com.crt \
+    -e REGISTRY_HTTP_TLS_KEY=/certs/reg.codesafe.com.key \
+    registry:2
+```
+* 修改镜像标签，否则会提示找不到镜像的
+```sh
+docker tag bigbaldy/docker-demo reg.codesafe.com/bigbaldy/docker-demo
+```
+* push镜像到私有库
+```sh
+docker push reg.codesafe.com/bigbaldy/docker-demo
+```
+## 获取私有仓库镜像列表
 ```python
 import requests
 import json
