@@ -67,6 +67,7 @@ cp ~/certs/reg.itmuch.com.crt /etc/docker/certs.d/reg.codesafe.com
 * 重启docker
 ```sh
 systemctl restart docker
+```
 * 启动私有库，注意要在~目录下执行
 ```sh
 docker run -d -p 443:5000 \
@@ -138,19 +139,28 @@ docker-compose -f docker-demo.yml up
 ```
 ## Maven插件构建Docker镜像
 http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种错误！！文章后面有各种解决方式，可以尝试，个人倾向于手动写Dockerfile，然后通过jenkins调用docker命令进行镜像push
+## 常用命令
+* docker images - 查看镜像列表
+* docker ps -a 查看容器列表
+* docker run -d -p 8888:8888 reg.codesafe.com/bigbaldy/docker-demo - 启动镜像
+* docker start [CONTAINER ID] - 启动容器
+* docker stop [CONTAINER ID] - 停止正在运行的容器
+* docker rm [CONTAINER ID] - 删除容器，注意必须停止才能删除
+* docker rmi [IMAGE ID] - 删除镜像
+* docker pull reg.codesafe.com/bigbaldy/docker-demo - 拉取镜像
 # Kubernetes安装使用
 ## minikube
 * [官网](https://kubernetes.io/docs/tasks/tools/install-minikube/README.md)
 ### 1. 安装virtualbox
-* [下载virtualbox](https://www.virtualbox.org/wiki/Linux_Downloads)
 * yum install SDL
-* yum install xxxx.rpm
 * yum install kernel-devel //注意版本要与系统内核版本一致，若不一致请下载相应的kernel-devel安装包或者升级系统内核（http://blog.csdn.net/u010250863/article/details/70169985）
 * 如果安装过KVM，请停止服务
     - systemctl stop libvirtd
     - ps -ef|grep kvm|grep -v grep|cut -c 9-15|xargs kill -9
     - modprobe -r kvm_intel
     - modprobe -r kvm
+* yum install gcc
+* [下载virtualbox](https://www.virtualbox.org/wiki/Linux_Downloads)
 ### 2. 安装kubectl 
 * 查看最新稳定版：https://storage.googleapis.com/kubernetes-release/release/stable.txt
 * 下载，修改版本号即可下载相应版本，例如：https://storage.googleapis.com/kubernetes-release/release/v1.8.3/bin/linux/amd64/kubectl
@@ -161,19 +171,36 @@ http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种�
 * [下载](https://github.com/kubernetes/minikube/releases)
 ### 4. 启动minikube
 * minikube start //注意启动过程中会下载localkube，需要翻墙(export http_proxy=http://10.16.13.18:8080)
-### 5. 运行container
+### 5. 一些前提操作
+* minikube ssh
+* sudo vim /etc/hosts 添加172.24.62.181 reg.codesafe.com
+* scp root@172.24.62.181:/etc/docker/certs.d/reg.codesafe.com/reg.codesafe.com.crt /etc/docker/certs.d/reg.codesafe.com/
+* 防止从google拉取镜像
+    * docker pull registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0
+    * docker tag registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0 gcr.io/google_containers/pause-amd64:3.0
+### 6. 运行container
 ```sh
-kubectl run docker-demo --image=127.0.0.1:5555/bigbaldy/docker-demo --port=8888
+kubectl run docker-demo --image=reg.codesafe.com/bigbaldy/docker-demo --port=8888
 ```
-查看pod:
+### 7. 创建服务
 ```sh
-kubectl get pods
+kubectl expose deployment docker-demo --type=LoadBalancer
 ```
-会一直卡在creating，没有成功
-### 5. Web UI (Dashboard)
+### 8. 打开浏览器访问你的app
+```sh
+minikube service docker-demo
+```
+## Web UI (Dashboard)
 * [官网](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
 * 部署Dashboard UI
 ```sh
 kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
 ```
 * 访问Dashboard UI （未实现，远程机器权限问题还在研究）
+## 常用命令
+* kubectl get pods - 查看pod
+* kubectl describe pod [PodName] - 查看出错原因
+* kubectl delete service docker-demo - 删除服务
+* kubectl delete deployment docker-demo - 删除部署
+* kubectl get services - 查看服务
+* kubectl get doployments - 查看部署
