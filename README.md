@@ -13,9 +13,15 @@ yum-config-manager \
     https://download.docker.com/linux/centos/docker-ce.repo
 yum install docker-ce
 ```
-## 启动
+## 配置镜像加速并启动docker
+1. 登录阿里云账号，https://cr.console.aliyun.com/#/accelerator
+2. 用加速器地址替换以下命令中的：\<your accelerate address\>
+3. 修改\<ip\>和\<port\>为私服地址
 ```sh
-systemctl start docker
+sudo cp -n /lib/systemd/system/docker.service /etc/systemd/system/docker.service
+sudo sed -i "s|ExecStart=/usr/bin/dockerd|ExecStart=/usr/bin/dockerd --registry-mirror=<your accelerate address> --insecure-registry=<ip>:<port>|g" /etc/systemd/system/docker.service
+sudo systemctl daemon-reload
+sudo systemctl docker start
 ```
 ## 编写Dockerfile
 ```docker
@@ -88,7 +94,7 @@ docker tag bigbaldy/docker-demo reg.codesafe.com/bigbaldy/docker-demo
 ```sh
 docker push reg.codesafe.com/bigbaldy/docker-demo
 ```
-## 获取私有仓库镜像列表
+## 获取私有仓库镜像列表（HTTP）
 ```python
 import requests
 import json
@@ -121,23 +127,70 @@ def getImagesNames(repo_ip,repo_port):
 print getImagesNames(repo_ip, repo_port)
 ```
 执行就可以看到[u'127.0.0.1:5000/bigbaldy/docker-demo:latest']
+## 获取私有仓库镜像列表（HTTPS）
+* curl --cacert ../certs/reg.codesafe.com.crt https://reg.codesafe.com/v2/_catalog
+* [Docker Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)
+## 使用Harbor搭建私有仓库
+[官网](http://vmware.github.io/harbor/)
+1. 下载
+```sh
+wget https://github.com/vmware/harbor/archive/master.zip
+```
+2. 解压
+```sh
+unzip master.zip 
+cd /harbor-master/make
+```
+3. 修改配置文件
+```sh
+vim harbor.cfg
+./prepare
+```
+4. 更新docker-compose.yml
+```sh
+cp docker-compose.tpl docker-compose.yml
+#在docker hub查找docker-compose.yml配置文件中所有镜像的官方最新版本号，将__version__替换掉
+```
+5. 运行
+```sh
+docker-compose up -d
+```
+6. 上传镜像到harbor
+```sh
+docker login 172.24.62.181 #根据提示输入用户名密码
+docker push 172.24.62.181/bigbaldy/docker-demo
+```
+http://blog.csdn.net/luckytanggu/article/details/70285837
 ## Docker-Compose（一条命令启动多个镜像）
 * 安装docker-compose(https://github.com/docker/compose/releases)
-* 配置启动文件，例如docker-demo.yml
+* 配置启动文件，例如docker-compose.yml
 ```yaml
 version: '3'
 services:
-  docker-demo:
-    image: bigbaldy/docker-demo
-    restart: always
+  eureka:
+    build: eureka #docker文件位置
+    restart: always #启动失败是否重启
     ports:
-      - 8888:8888
+      - 1001:1001
+    network_mode: "host" #与真实机使用相同的网络环境
+  server1:
+    build: server1
+    ports:
+      - 2001:2001
+    network_mode: "host"
+  server2:
+    build: server2
+    ports:
+      - 2002:2002
+    network_mode: "host"
 ```
 * 使用docker-compose启动镜像
 ```sh
-docker-compose -f docker-demo.yml up
+docker-compose -f docker-demo.yml up -d #-f docker-demo.yml可以省略
 ```
-## Maven插件构建Docker镜像
+## 网络配置
+容器与容器之间网络是隔离的，所以服务内部不能用IP，要写网络名（docker-demo）
+## Maven插件构建Docker镜像(127.0.0.1)
 http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种错误！！文章后面有各种解决方式，可以尝试，个人倾向于手动写Dockerfile，然后通过jenkins调用docker命令进行镜像push
 ## 常用命令
 * docker images - 查看镜像列表
@@ -148,6 +201,20 @@ http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种�
 * docker rm [CONTAINER ID] - 删除容器，注意必须停止才能删除
 * docker rmi [IMAGE ID] - 删除镜像
 * docker pull reg.codesafe.com/bigbaldy/docker-demo - 拉取镜像
+* docker rmi \`docker images|grep '\<none\>'|awk '{print $3}'\` - 清除\<none\>镜像
+* docker-compose rm - 使用docker-compose.yml清除容器
+* docker-compose up --build -d - 更新并启动容器
+## jenkins更新脚本
+```sh
+#!/bin/bash
+imageName='bigbaldy/docker-demo'
+containId=`docker ps -a|grep $imageName|awk '{print $1}'`
+docker stop $containId
+docker rm $containId
+docker rmi `docker images|grep '^'$imageName|awk '{print $3}'`
+docker build -t $imageName .
+docker run -d -p 8888:8888 $imageName
+```
 # Kubernetes安装使用
 ## minikube
 * [官网](https://kubernetes.io/docs/tasks/tools/install-minikube/README.md)

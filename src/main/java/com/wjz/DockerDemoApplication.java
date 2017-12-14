@@ -17,4 +17,9 @@ public class DockerDemoApplication {
 	public String hello(){
 		return "hello kubernetes";
 	}
+
+	@GetMapping("/test")
+	public String test(){
+		return "v6";
+	}
 }
