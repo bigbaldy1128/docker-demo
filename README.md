@@ -45,7 +45,7 @@ docker build -t bigbaldy/docker-demo .
 ```sh
 docker run -d -p 8888:8888 bigbaldy/docker-demo
 ```
-## 访问http://127.0.0.1:8888/hello 返回hello kubernetes
+访问http://127.0.0.1:8888/hello 返回hello kubernetes
 ## 推送镜像
 ```sh
 docker push bigbaldy/docker-demo //需要输入你在DockerHub上注册的用户密码
@@ -61,7 +61,7 @@ mkdir -p ~/certs
 cd ~/certs
 openssl genrsa -out reg.codesafe.com.key 2048
 ```
-* ⽣成密钥⽂件，会有⼀些信息需要填写，注意“Common Name”要填写“reg.codesafe.com”
+* 生成密钥文件，会有一些信息需要填写，注意“Common Name”要填写“reg.codesafe.com”
 ```sh
 openssl req -newkey rsa:4096 -nodes -sha256 -keyout reg.codesafe.com.key -x509 -days 365 -out reg.codesafe.com.crt
 ```
