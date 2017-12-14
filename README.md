@@ -204,6 +204,8 @@ http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种�
 * docker rmi \`docker images|grep '\<none\>'|awk '{print $3}'\` - 清除\<none\>镜像
 * docker-compose rm - 使用docker-compose.yml清除容器
 * docker-compose up --build -d - 更新并启动容器
+* docker save [REPOSITORY]>filename - 保存镜像到文件
+* docker load <filename - 导入文件到镜像
 ## jenkins更新脚本
 ```sh
 #!/bin/bash
