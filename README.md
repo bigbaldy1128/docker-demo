@@ -196,12 +196,11 @@ docker-compose -f docker-demo.yml up -d #-f docker-demo.yml可以省略
 http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种错误！！文章后面有各种解决方式，可以尝试，个人倾向于手动写Dockerfile，然后通过jenkins调用docker命令进行镜像push
 ## 定制容器镜像
 ```sh
-docker pull centos
-docker run -it -d --name centos centos
-docker exec -it centos /bin/bash
-chown -R mysql /var/lib/mysql
-docker commit --change='ENTRYPOINT mysqld --defaults-file=/etc/my.cnf --user=root' -c "EXPOSE 3306" 91d4a3717932 mysql-5.7
-docker commit --change='CMD ["/usr/local/mysql/run.sh"]' -c "EXPOSE 3306" 91d4a3717932 mysql-5.7
+docker pull centos #拉取centos
+docker run -it -d --name centos centos #运行容器
+docker exec -it centos /bin/bash #进入容器
+#在容器内进行相关安装
+docker commit --change='ENTRYPOINT XXXX' -c "EXPOSE XXXX" NAMES REPOSITORY #更改启动命令并新建快照
 ```
 ## jenkins更新脚本
 ```sh
