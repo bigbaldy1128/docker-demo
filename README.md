@@ -21,7 +21,7 @@ yum install docker-ce
 sudo cp -n /lib/systemd/system/docker.service /etc/systemd/system/docker.service
 sudo sed -i "s|ExecStart=/usr/bin/dockerd|ExecStart=/usr/bin/dockerd --registry-mirror=<your accelerate address> --insecure-registry=<ip>:<port>|g" /etc/systemd/system/docker.service
 sudo systemctl daemon-reload
-sudo systemctl docker start
+sudo systemctl start docker
 ```
 ## 编写Dockerfile
 ```docker
@@ -161,15 +161,17 @@ docker login 172.24.62.181 #根据提示输入用户名密码
 docker push 172.24.62.181/bigbaldy/docker-demo
 ```
 http://blog.csdn.net/luckytanggu/article/details/70285837
-## Docker-Compose（一条命令启动多个镜像）
+## 使用Docker-Compose
 * 安装docker-compose(https://github.com/docker/compose/releases)
 * 配置启动文件，例如docker-compose.yml
-```yaml
-version: '3'
+```yml
+version: '3' #文件版本
 services:
   eureka:
     build: eureka #docker文件位置
-    restart: always #启动失败是否重启
+    restart: always #启动失败是否重启 
+    volumes:
+      - /data/demo/:/usr/local/codesafe/:z #将容器目录映射到物理机
     ports:
       - 1001:1001
     network_mode: "host" #与真实机使用相同的网络环境
@@ -192,30 +194,41 @@ docker-compose -f docker-demo.yml up -d #-f docker-demo.yml可以省略
 容器与容器之间网络是隔离的，所以服务内部不能用IP，要写网络名（docker-demo）
 ## Maven插件构建Docker镜像(127.0.0.1)
 http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种错误！！文章后面有各种解决方式，可以尝试，个人倾向于手动写Dockerfile，然后通过jenkins调用docker命令进行镜像push
-## 常用命令
-* docker images - 查看镜像列表
-* docker ps -a 查看容器列表
-* docker run -d -p 8888:8888 reg.codesafe.com/bigbaldy/docker-demo - 启动镜像
-* docker start [CONTAINER ID] - 启动容器
-* docker stop [CONTAINER ID] - 停止正在运行的容器
-* docker rm [CONTAINER ID] - 删除容器，注意必须停止才能删除
-* docker rmi [IMAGE ID] - 删除镜像
-* docker pull reg.codesafe.com/bigbaldy/docker-demo - 拉取镜像
-* docker rmi \`docker images|grep '\<none\>'|awk '{print $3}'\` - 清除\<none\>镜像
-* docker-compose rm - 使用docker-compose.yml清除容器
-* docker-compose up --build -d - 更新并启动容器
-* docker save [REPOSITORY]>filename - 保存镜像到文件
-* docker load <filename - 导入文件到镜像
+## 定制容器镜像
+```sh
+docker pull centos
+docker run -it -d --name centos centos
+docker exec -it centos /bin/bash
+chown -R mysql /var/lib/mysql
+docker commit --change='ENTRYPOINT mysqld --defaults-file=/etc/my.cnf --user=root' -c "EXPOSE 3306" 91d4a3717932 mysql-5.7
+docker commit --change='CMD ["/usr/local/mysql/run.sh"]' -c "EXPOSE 3306" 91d4a3717932 mysql-5.7
+```
 ## jenkins更新脚本
 ```sh
 #!/bin/bash
-imageName='bigbaldy/docker-demo'
-containId=`docker ps -a|grep $imageName|awk '{print $1}'`
-docker stop $containId
-docker rm $containId
-docker rmi `docker images|grep '^'$imageName|awk '{print $3}'`
-docker build -t $imageName .
-docker run -d -p 8888:8888 $imageName
+docker-compose up --build -d
+docker rmi `docker images|grep '<none>'|awk '{print $3}'`
+```
+## 常用命令
+[官网](https://docs.docker.com/engine/reference/commandline/docker/)
+```sh
+docker images #查看镜像列表
+docker ps -a #查看容器列表
+docker run -d -p 8888:8888 reg.codesafe.com/bigbaldy/docker-demo #启动镜像
+docker start CONTAINER_ID #启动容器
+docker stop CONTAINER_ID #停止正在运行的容器
+docker rm CONTAINER_ID #删除容器，注意必须停止才能删除
+docker rmi IMAGE_ID #删除镜像
+docker pull reg.codesafe.com/bigbaldy/docker-demo #拉取镜像
+docker rmi `docker images|grep '<none>'|awk '{print $3}'` #清除<none>镜像
+docker-compose rm #使用docker-compose.yml清除容器
+docker-compose up --build -d #更新并启动容器
+docker save REPOSITORY > FILENAME #保存镜像到文件
+docker load < FILENAME #导入文件到镜像
+docker cp FILENAME CONTAINER_ID:FILENAME #拷贝文件到容器
+docker cp CONTAINER_ID:FILENAME FILENAME #拷贝容器内文件到物理机
+docker exec -it CONTAINER_ID /bin/bash #进入容器
+docker commit -p CONTAINER_ID CONTAINER_BAK_NAME #新建容器快照
 ```
 # Kubernetes安装使用
 ## minikube
