@@ -208,6 +208,58 @@ docker commit --change='ENTRYPOINT XXXX' -c "EXPOSE XXXX" NAMES REPOSITORY #更�
 docker-compose up --build -d
 docker rmi `docker images|grep '<none>'|awk '{print $3}'`
 ```
+## Docker Swarm
+* docker machine安装 - [下载](https://github.com/docker/machine/releases/)
+* [官网](https://docs.docker.com/engine/swarm/swarm-tutorial/)
+## Docker Stack
+* [官网](https://docs.docker.com/get-started/part5/)
+
+```sh
+docker network create -d overlay springcloud-overlay # 创建overlay网络
+docker stack deploy -c docker-compose.yml demo #启动命令
+```
+docker-compose.yml内容
+```yml
+version: '3'
+services:
+  eureka:
+    image: 172.24.62.181/bigbaldy/eureka
+    ports:
+      - "1001:1001"
+    networks:
+      - springcloud-overlay
+  server1:
+    image: 172.24.62.181/bigbaldy/server1
+    environment:
+      - EUREKA_SERVER_ADDRESS=eureka
+    ports:
+      - "2001:2001"
+    networks:
+      - springcloud-overlay
+  server2:
+    image: 172.24.62.181/bigbaldy/server2
+    deploy:
+      replicas: 2
+    environment:
+      - EUREKA_SERVER_ADDRESS=eureka
+    networks:
+      - springcloud-overlay
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8089:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - springcloud-overlay
+networks:
+  springcloud-overlay:
+    external:
+      name: springcloud-overlay
+```
 ## 常用命令
 [官网](https://docs.docker.com/engine/reference/commandline/docker/)
 ```sh
@@ -228,6 +280,7 @@ docker cp FILENAME CONTAINER_ID:FILENAME #拷贝文件到容器
 docker cp CONTAINER_ID:FILENAME FILENAME #拷贝容器内文件到物理机
 docker exec -it CONTAINER_ID /bin/bash #进入容器
 docker commit -p CONTAINER_ID CONTAINER_BAK_NAME #新建容器快照
+docker rm `docker ps -a -q` #删除所有容器
 ```
 # Kubernetes安装使用
 ## minikube
