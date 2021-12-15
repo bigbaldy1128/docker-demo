@@ -198,7 +198,7 @@ http://blog.csdn.net/qq_22841811/article/details/67369530 //运行会报各种�
 ## 定制容器镜像
 ```sh
 docker pull centos #拉取centos
-docker run -it -d --name centos centos sh #运行并进入容器，如果容器一启动就报错退出可以尝试用这条指令进入
+docker run -it [image_name] sh #运行并进入容器，如果容器一启动就报错退出可以尝试用这条指令进入
 docker exec -it centos /bin/bash #进入容器
 #在容器内进行相关安装
 docker commit --change='ENTRYPOINT XXXX' -c "EXPOSE XXXX" NAMES REPOSITORY #更改启动命令并新建快照
